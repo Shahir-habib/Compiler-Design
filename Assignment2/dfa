@@ -1,0 +1,12 @@
+// Colorful DFA State Transition Diagram
+digraph {
+	q0 [fillcolor=lightcoral shape=doublecircle style=filled]
+	q1 [fillcolor=lightblue shape=doublecircle style=filled]
+	q2 [fillcolor=lightgreen shape=doublecircle style=filled]
+	q0 -> q1 [label=a color=orange]
+	q0 -> q2 [label=b color=orange]
+	q1 -> q1 [label=a color=orange]
+	q1 -> q2 [label=b color=orange]
+	q2 -> q1 [label=a color=orange]
+	q2 -> q2 [label=b color=orange]
+}

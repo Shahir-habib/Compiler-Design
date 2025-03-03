@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFA Generator</title>
+    <link rel = "stylesheet" type = "text/css" href = "style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>DFA Generator from Regular Expression</h1>
+        <label for="alphabet">Enter Alphabet (comma-separated, e.g., a,b):</label>
+        <input type="text" id="alphabet" placeholder="a,b">
+
+        <label for="regex">Enter Regular Expression:</label>
+        <input type="text" id="regex" placeholder="(a+b)*">
+
+        <button onclick="generateDFA()">Generate DFA</button>
+
+        <h2>DFA State Table</h2>
+        <table id="dfaTable">
+            <thead>
+                <tr>
+                    <th>State</th>
+                    <!-- Alphabet symbols will be dynamically added here -->
+                    <th>Accepting?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- DFA rows will be dynamically added here -->
+            </tbody>
+        </table>
+        <h2>DFA State Transition Diagram</h2>
+        <img id="dfaDiagram" src= alt="DFA Diagram" style="max-width: 100%; height: auto;">
+        
+        <label for="inputString">Enter a string to simulate:</label>
+        <input type="text" id="inputString" placeholder="e.g., aab">
+        <button onclick="simulateString()">Simulate String</button>
+
+        <p id="simulationResult"></p>
+
+    </div>
+
+    <script>
+        function simulateString() {
+            const inputString = document.getElementById('inputString').value.trim();
+            const dfaTable = window.dfaTable; // Assuming you store the DFA table globally after fetching it
+            const acceptingStates = window.acceptingStates; // Assuming you store the accepting states globally after fetching them
+
+            if (!dfaTable || !acceptingStates) {
+                alert("DFA not generated yet. Please generate the DFA first.");
+                return;
+            }
+
+            let currentState = 0; // Start from the initial state (q0)
+            for (const symbol of inputString) {
+                if (!dfaTable[currentState].hasOwnProperty(symbol)) {
+                    // If the symbol is not in the alphabet, the string is rejected
+                    document.getElementById('simulationResult').innerText = `String "${inputString}" is NOT accepted by the DFA.`;
+                    return;
+                }
+                currentState = dfaTable[currentState][symbol];
+            }
+
+            // Check if the final state is an accepting state
+            if (acceptingStates.includes(currentState)) {
+                document.getElementById('simulationResult').innerText = `String "${inputString}" is ACCEPTED by the DFA.`;
+            } else {
+                document.getElementById('simulationResult').innerText = `String "${inputString}" is NOT accepted by the DFA.`;
+            }
+        }
+
+        // Modify the generateDFA function to store the DFA table and accepting states globally
+        async function generateDFA() {
+            const alphabetInput = document.getElementById('alphabet').value.trim();
+            const alphabet = alphabetInput.split(',').map(s => s.trim()).filter(s => s !== '');
+            const regex = document.getElementById('regex').value.trim();
+
+            const response = await fetch('http://127.0.0.1:5000/generate-dfa', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ alphabet, regex }),
+            });
+
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            const { dfa_table, accepting_states, diagram_url } = result;
+            const diagramImg = document.getElementById('dfaDiagram');
+            diagramImg.src = "./dfa.png?t=" + new Date().getTime(); // Force reload the image
+            console.log(result);
+            
+            // Store the DFA table and accepting states globally
+            window.dfaTable = dfa_table;
+            window.acceptingStates = accepting_states;
+
+            // Update DFA table display
+            const table = document.getElementById('dfaTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+
+            thead.innerHTML = `<tr><th>State</th>${alphabet.map(s => `<th>${s}</th>`).join('')}<th>Accepting?</th></tr>`;
+            tbody.innerHTML = Object.keys(dfa_table).map(state => {
+                const isAccepting = accepting_states.includes(Number(state));
+                const rowClass = isAccepting ? 'accepting' : 'not-accepting'; // Apply the respective class based on the state type
+
+                return `<tr class="${rowClass}">
+            <td>q${state}</td>
+            ${alphabet.map(s => `<td>q${dfa_table[state][s]}</td>`).join('')}
+            <td>${isAccepting ? 'Yes' : 'No'}</td>
+        </tr>`;
+            }).join('');
+        }
+    </script>
+</body>
+
+</html>
