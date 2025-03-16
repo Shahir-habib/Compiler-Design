@@ -1,0 +1,8 @@
+%tokens c d
+%%
+S: C C
+    ;
+C: c C
+    | d
+    ;
+%%

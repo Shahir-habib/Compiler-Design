@@ -34,7 +34,9 @@ Thumbs.db
 *.rc
 /.qmake.cache
 /.qmake.stash
-
+input.txt
+input3.txt
+input1.txt
 # qtcreator generated files
 *.pro.user*
 CMakeLists.txt.user*
@@ -59,7 +61,7 @@ CMakeLists.txt.user*
 *.opensdf
 *.vcxproj
 *vcxproj.*
-
+.vscode/
 # MinGW generated files
 *.Debug
 *.Release

@@ -1,0 +1,10 @@
+int main() {
+    int x = 10;
+    float y = 20.5;
+    if (x == y) {
+        print x;
+    } else {
+        print y;
+    }
+    return 0;
+}

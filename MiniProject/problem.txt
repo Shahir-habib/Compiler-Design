@@ -1,0 +1,43 @@
+BCSE III – Compiler Design Lab
+
+ 
+
+Project – 10
+
+ 
+
+Consider a simple C-like language with
+
+ 
+
+Data Type : integer (int), floating point (float) and void
+
+Declaration statements can appear anywhere in the program and scope rules are   to be maintained accordingly.
+
+Condition constructs: if, else. (if without else and nested statements are not supported).
+
+Assignments to the variables are performed using the input / output constructs:
+
+        read x - Read into variable x
+
+        print x - Write variable x to output
+
+   
+
+Arithmetic operators {+, -, *, /, %, ++} are supported
+
+Relational operators used in the if statement are {<, >, ==}
+
+ 
+
+There may be more than one functions in the program.
+
+ 
+
+Part I – Construct a CFG for this language.
+
+Part II – Write lexical analyser to scan the stream of characters from a program written in the above language and generate stream of tokens.
+
+Part III – Maintain a symbol table with appropriate data structures. The symbol table should also maintain the scope of each variable declared within the program.
+
+Part IV – Write a bottom-up parser for this language (modules include LR(1) item set construction, parsing table construction and parsing).

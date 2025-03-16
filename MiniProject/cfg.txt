@@ -1,0 +1,71 @@
+%tokens ID NUM DEC INT VOID FLOAT EQ LPAREN RPAREN LBRACE RBRACE SEMI COMMA IF ELSE READ PRINT EQEQ LT GT PLUS MINUS MULT DIV MOD INC
+
+%%
+
+S: declaration_list function_list
+    ;
+declaration_list: declaration declaration_list
+    | 
+    ;
+declaration: type_specifier ID SEMI
+    ;
+type_specifier: INT
+    | VOID
+    | FLOAT
+    ;
+function_list: function function_list
+    | 
+    ;
+function: type_specifier ID LPAREN params RPAREN compound_stmt
+    ;
+params: type_specifier ID COMMA params
+    | type_specifier ID
+    |
+    ;
+compound_stmt: LBRACE statement_list RBRACE
+    ;
+statement_list: statement statement_list
+    | 
+    ;
+statement: declaration
+    | assignments
+    | condition
+    | read_stmt
+    | print_stmt
+    ;
+assignments: ID EQ expression SEMI
+    ;
+expression: expression PLUS expression
+    | expression MINUS expression
+    | expression MULT expression
+    | expression DIV expression
+    | expression MOD expression
+    | expression INC
+    | LPAREN expression RPAREN
+    | ID
+    | literal
+    ;
+literal: integer
+    | float
+    | string
+    | ID
+    ;
+integer: NUM
+    ;
+float: DEC
+    ;
+string: ID
+    |
+    ;
+condition: IF LPAREN rel_expression RPAREN compound_stmt ELSE compound_stmt 
+    ;
+rel_expression: expression EQEQ expression
+    | expression LT expression
+    | expression GT expression
+    ;
+read_stmt: READ ID SEMI
+    ;
+print_stmt: PRINT ID SEMI
+    | PRINT literal SEMI
+    ;
+%%
