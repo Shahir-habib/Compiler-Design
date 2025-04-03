@@ -2,7 +2,7 @@
 
 %%
 
-S: declaration_list function_list
+S: declaration_list statement_list function_list
     ;
 declaration_list: declaration declaration_list
     | 
@@ -35,14 +35,16 @@ statement: declaration
     ;
 assignments: ID EQ expression SEMI
     ;
-expression: expression PLUS expression
+expression: ID
+    | NUM
+    | DEC
+    | expression PLUS expression
     | expression MINUS expression
     | expression MULT expression
     | expression DIV expression
     | expression MOD expression
     | expression INC
     | LPAREN expression RPAREN
-    | ID
     | literal
     ;
 literal: integer

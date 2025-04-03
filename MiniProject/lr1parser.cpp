@@ -572,11 +572,9 @@ void constructlr1parsingTable(const map<int, vector<Item>> &states,
                               vector<string> &nonTerminals, vector<string> &terminals,
                               set<string> &terminalSet,
                               map<string, set<string>> &first,
-                              map<string, set<string>> &follow)
+                              map<string, set<string>> &follow,
+                              map<pair<int, string>, string> &parsingTable)
 {
-    // Initialize parsing table
-    map<pair<int, string>, string> parsingTable;
-
     // Fill parsing table
     for (const auto &[stateId, items] : states)
     {
@@ -747,28 +745,135 @@ void printItem(const Item &item, ofstream &outFile)
 }
 
 // Function to print all states
-void printStates(const map<int, vector<Item>> &states,ofstream &outFile)
+void printStates(const map<int, vector<Item>> &states, ofstream &outFile)
 {
-    
+
     for (const auto &[stateId, items] : states)
     {
         outFile << "State " << stateId << ":" << endl;
         for (const auto &item : items)
         {
-            printItem(item,outFile);
+            printItem(item, outFile);
         }
         outFile << "-----------------------------" << endl;
     }
     outFile.close();
 }
+
+void parseInput(vector<string> &tkns,
+                const map<pair<int, string>, string> &parsingTable,
+                const map<int, pair<string, vector<string>>> &productions)
+{
+    stack<string> stck;
+    stck.push("0");
+    int tknindex = 0;
+    tkns.push_back("$");
+    string lookahead = tkns[tknindex];
+
+    cout << "Parsing Input........" << endl;
+    // Print the header for the table
+    cout << "| Stack\t\t| Input\t\t\t| Action\t|" << endl;
+    cout << "|---------------|----------------------|---------------|" << endl;
+    while (true)
+    {
+        
+
+        // Print the current stack
+        stack<string> temp = stck; // Create a copy of the stack for printing
+        string stack_str = "";
+        while (!temp.empty())
+        {
+            stack_str = temp.top() + " " + stack_str;
+            temp.pop();
+        }
+
+        // Print the current input
+        cout << "| " << stack_str << "\t\t| ";
+        for (int i = tknindex; i < tkns.size(); i++)
+        {
+            cout << tkns[i] << " ";
+        }
+
+        // Prepare to print the action
+        cout << "\t\t| ";
+
+        string topstck = stck.top();
+        int topst;
+        try
+        {
+            topst = stoi(topstck);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            cerr << "Error: Invalid state value on stack: " << topstck << endl;
+            return;
+        }
+
+        // Handle Shift action
+        if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead})[0] == 's')
+        {
+            cout << "Shift " << lookahead << endl;
+            stck.push(lookahead);
+            stck.push(parsingTable.at({topst, lookahead}).substr(1));
+            tknindex++;
+            lookahead = tkns[tknindex];
+        }
+        // Handle Reduce action
+        else if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead})[0] == 'r')
+        {
+            string production = parsingTable.at({topst, lookahead});
+            int prod_no = stoi(production.substr(1));
+            string head = productions.at(prod_no).first;
+            vector<string> body = productions.at(prod_no).second;
+            cout << "Reduce by " << head << " -> ";
+            for (const auto &symbol : body)
+            {
+                cout << symbol << " ";
+            }
+            cout << endl;
+
+            for (int i = 0; i < body.size(); i++)
+                stck.pop();
+            for (int i = 0; i < body.size(); i++)
+                stck.pop();
+            topst = stoi(stck.top());
+            stck.push(head);
+            stck.push(parsingTable.at({topst, head}));
+        }
+        // Handle Accept action
+        else if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead}) == "Accept")
+        {
+            cout << "Accepted" << endl;
+            break;
+        }
+        // Completed just epsilon left
+        else
+        {
+            if (lookahead == "$" )
+            {
+                cout << "Accepted" << endl;
+                break;
+            }
+            cout << "Error: Unexpected token '" << lookahead << "' at state " << topst << endl;
+            break;
+        }
+    }
+}
+
 int main(int argc, char const *argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
     {
-        cerr << "Usage: " << argv[0] << " <grammar_file>" << endl;
+        cerr << "Usage: " << argv[0] << " <grammar_file> <string_file>" << endl;
         return 1;
     }
     ifstream file(argv[1]);
+    ifstream stringFile(argv[2]);
+    if (!stringFile.is_open())
+    {
+        cerr << "Error opening string file!" << endl;
+        return 1;
+    }
     if (!file.is_open())
     {
         cerr << "Error opening file!" << endl;
@@ -782,7 +887,28 @@ int main(int argc, char const *argv[])
     map<int, vector<Item>> states;
     readterminals_and_nonterminals(nonTerminals, terminals, terminalSet, file);
     map<int, pair<string, vector<string>>> productions;
+    map<pair<int, string>, string> parsingTable;
+    vector<string> inputTokens;
+    string token;
+    while (stringFile >> token)
+    {
+        // if (token == "epsilon")
+        //     continue;
+        inputTokens.push_back(token);
+    }
+    // int c=0;
+    // while (getline(stringFile, line))
+    // {
+    //     stringstream ss(line);
+    //     string tokenType, value;
+    //     int lineNumber, scopeLevel;
 
+    //     ss >> tokenType >> value >> lineNumber >> scopeLevel;
+    //     if (c > 2)
+    //         inputTokens.push_back(value);
+    //     c++;
+    // }
+    // inputTokens.pop_back();
     ofstream outFile("lr1itemsets.txt");
 
     if (!outFile)
@@ -835,13 +961,16 @@ int main(int argc, char const *argv[])
     lr1ItemSet(productions, nonTerminals, terminals, first, states);
     removeDuplicates(states);
     outFile << "\n_______LR(1) Item Sets_______\n";
-    
-    printStates(states,outFile);
-    
-    cout<<"First and Follow Sets have been written to 'lr1itemsets.txt'."<<endl;
+
+    printStates(states, outFile);
+
+    cout << "First and Follow Sets have been written to 'lr1itemsets.txt'." << endl;
     cout << "LR(1) Item Sets have been written to 'lr1itemsets.txt'." << endl;
-    constructlr1parsingTable(states, productions, nonTerminals, terminals, terminalSet, first, follow);
+    constructlr1parsingTable(states, productions, nonTerminals, terminals, terminalSet, first, follow, parsingTable);
     cout << "LR(1) Parsing Table has been written to 'parsingtable.txt'." << endl;
+    parseInput(inputTokens, parsingTable, productions);
+    cout << endl;
     outFile.close();
+    stringFile.close();
     return 0;
 }
