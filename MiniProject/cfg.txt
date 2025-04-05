@@ -2,39 +2,56 @@
 
 %%
 
-S: declaration_list statement_list function_list
+S: function_list S
+    | declaration_list S
+    | function_list
+    | declaration_list
     ;
-declaration_list: declaration declaration_list
-    | 
+
+
+declaration_list: declaration 
+    | declaration_list declaration
     ;
+
 declaration: type_specifier ID SEMI
     ;
+
 type_specifier: INT
     | VOID
     | FLOAT
     ;
-function_list: function function_list
-    | 
+
+function_list: function 
+    | function_list function
     ;
+
 function: type_specifier ID LPAREN params RPAREN compound_stmt
     ;
-params: type_specifier ID COMMA params
+
+params: 
+    | type_specifier ID COMMA params
     | type_specifier ID
-    |
     ;
+
 compound_stmt: LBRACE statement_list RBRACE
     ;
-statement_list: statement statement_list
-    | 
+
+statement_list: statement
+    |   statement_list statement
     ;
+
 statement: declaration
     | assignments
+    | return_stmt
     | condition
     | read_stmt
     | print_stmt
     ;
+return_stmt: ID expression SEMI
+    ;
 assignments: ID EQ expression SEMI
     ;
+
 expression: ID
     | NUM
     | DEC
@@ -45,29 +62,20 @@ expression: ID
     | expression MOD expression
     | expression INC
     | LPAREN expression RPAREN
-    | literal
     ;
-literal: integer
-    | float
-    | string
-    | ID
-    ;
-integer: NUM
-    ;
-float: DEC
-    ;
-string: ID
-    |
-    ;
+
 condition: IF LPAREN rel_expression RPAREN compound_stmt ELSE compound_stmt 
     ;
+
 rel_expression: expression EQEQ expression
     | expression LT expression
     | expression GT expression
     ;
+
 read_stmt: READ ID SEMI
     ;
-print_stmt: PRINT ID SEMI
-    | PRINT literal SEMI
+
+print_stmt: PRINT expression SEMI
     ;
+
 %%

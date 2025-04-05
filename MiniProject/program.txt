@@ -1,7 +1,13 @@
+float fun(){
+    return 0.0 ;
+}
 int x ;
-    float y ;
-    if ( x == y ) {
-        print x ;
-    } else {
-        print y ;
-    }
+int main() {
+    int x;
+    read x ;
+    return 0 ;
+}
+int x;
+int main() {
+    return 0 ;
+}

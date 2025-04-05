@@ -772,12 +772,12 @@ void parseInput(vector<string> &tkns,
 
     cout << "Parsing Input........" << endl;
     // Print the header for the table
-    cout << "| Stack\t\t| Input\t\t\t| Action\t|" << endl;
-    cout << "|---------------|----------------------|---------------|" << endl;
+    // cout << "| Stack\t\t| Input\t\t\t| Action\t|" << endl;
+    // cout << "|---------------|----------------------|---------------|" << endl;
     while (true)
     {
         
-
+        cout << "Lookahead : " << lookahead << endl;
         // Print the current stack
         stack<string> temp = stck; // Create a copy of the stack for printing
         string stack_str = "";
@@ -788,11 +788,11 @@ void parseInput(vector<string> &tkns,
         }
 
         // Print the current input
-        cout << "| " << stack_str << "\t\t| ";
-        for (int i = tknindex; i < tkns.size(); i++)
-        {
-            cout << tkns[i] << " ";
-        }
+        // cout << "| " << stack_str << "\t\t| ";
+        // for (int i = tknindex; i < tkns.size(); i++)
+        // {
+        //     cout << tkns[i] << " ";
+        // }
 
         // Prepare to print the action
         cout << "\t\t| ";
@@ -805,14 +805,15 @@ void parseInput(vector<string> &tkns,
         }
         catch (const std::invalid_argument &e)
         {
-            cerr << "Error: Invalid state value on stack: " << topstck << endl;
+            cerr << "Error: Invalid state value on stack: 😢😢😢" << topstck << endl;
             return;
         }
 
         // Handle Shift action
         if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead})[0] == 's')
         {
-            cout << "Shift " << lookahead << endl;
+            cout << "Action : " << parsingTable.at({topst, lookahead}) << endl;
+            cout << "Shift  : " << lookahead << endl;
             stck.push(lookahead);
             stck.push(parsingTable.at({topst, lookahead}).substr(1));
             tknindex++;
@@ -825,6 +826,7 @@ void parseInput(vector<string> &tkns,
             int prod_no = stoi(production.substr(1));
             string head = productions.at(prod_no).first;
             vector<string> body = productions.at(prod_no).second;
+            cout << "Action : " << parsingTable.at({topst, lookahead}) << endl;
             cout << "Reduce by " << head << " -> ";
             for (const auto &symbol : body)
             {
@@ -843,7 +845,7 @@ void parseInput(vector<string> &tkns,
         // Handle Accept action
         else if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead}) == "Accept")
         {
-            cout << "Accepted" << endl;
+            cout << "Accepted 👌👌👌👌" << endl;
             break;
         }
         // Completed just epsilon left
@@ -851,7 +853,7 @@ void parseInput(vector<string> &tkns,
         {
             if (lookahead == "$" )
             {
-                cout << "Accepted" << endl;
+                cout << "Accepted 👌👌👌👌" << endl;
                 break;
             }
             cout << "Error: Unexpected token '" << lookahead << "' at state " << topst << endl;
@@ -890,25 +892,25 @@ int main(int argc, char const *argv[])
     map<pair<int, string>, string> parsingTable;
     vector<string> inputTokens;
     string token;
-    while (stringFile >> token)
-    {
-        // if (token == "epsilon")
-        //     continue;
-        inputTokens.push_back(token);
-    }
-    // int c=0;
-    // while (getline(stringFile, line))
+    // while (stringFile >> token)
     // {
-    //     stringstream ss(line);
-    //     string tokenType, value;
-    //     int lineNumber, scopeLevel;
-
-    //     ss >> tokenType >> value >> lineNumber >> scopeLevel;
-    //     if (c > 2)
-    //         inputTokens.push_back(value);
-    //     c++;
+    //     // if (token == "epsilon")
+    //     //     continue;
+    //     inputTokens.push_back(token);
     // }
-    // inputTokens.pop_back();
+    int c=0;
+    while (getline(stringFile, line))
+    {
+        stringstream ss(line);
+        string tokenType, value;
+        int lineNumber, scopeLevel;
+
+        ss >> tokenType >> value >> lineNumber >> scopeLevel;
+        if (c > 2)
+            inputTokens.push_back(value);
+        c++;
+    }
+    inputTokens.pop_back();
     ofstream outFile("lr1itemsets.txt");
 
     if (!outFile)
