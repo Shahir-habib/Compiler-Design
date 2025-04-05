@@ -77,7 +77,7 @@ unordered_map<TokenType, string> tokenTypeNames = {
 };
 
 // List of tokens: <TokenType, value, line number, scope level>
-vector<tuple<TokenType, string, int, int>> tokens;
+vector<tuple<TokenType, string, int, int,int>> tokens;
 
 // Tokenize the input code using regex
 void tokenize(const string &code) {
@@ -113,53 +113,67 @@ void tokenize(const string &code) {
 
     int lineNo = 1;       // Track line number
     int scopeNo = 0;      // Track scope level
+    int pos = 0;         // Track position in the line
     string remainingCode = code;
 
     // Iterate through the code and match tokens
     while (!remainingCode.empty()) {
         bool matched = false;
 
-        // Try to match each token pattern
-        for (const auto &pattern : tokenPatterns) {
+        for (const auto &pattern : tokenPatterns)
+        {
             smatch match;
-            if (regex_search(remainingCode, match, pattern.second, regex_constants::match_continuous)) {
+            if (regex_search(remainingCode, match, pattern.second, regex_constants::match_continuous))
+            {
                 string tokenValue = match.str();
                 TokenType tokenType = pattern.first;
 
-                // Update scope level based on '{' and '}'
-                if (tokenType == TokenType::LBRACE) {
+                if (tokenType == TokenType::LBRACE)
+                {
                     scopeNo++;
-                } else if (tokenType == TokenType::RBRACE) {
+                }
+                else if (tokenType == TokenType::RBRACE)
+                {
                     scopeNo--;
                 }
 
-                // Add the token to the list
-                tokens.push_back({tokenType, tokenValue, lineNo, scopeNo});
+                tokens.push_back({tokenType, tokenValue, lineNo, pos, scopeNo});
 
-                // Remove the matched token from the remaining code
+                size_t newLineCount = count(tokenValue.begin(), tokenValue.end(), '\n');
+
+                if (newLineCount > 0)
+                {
+                    lineNo += newLineCount;
+                    pos = 0;
+                }
+                else
+                {
+                    pos += tokenValue.length();
+                }
+
                 remainingCode = match.suffix().str();
-
-                // Update line number for newlines
-                size_t newlineCount = count(tokenValue.begin(), tokenValue.end(), '\n');
-                lineNo += newlineCount;
 
                 matched = true;
                 break;
             }
         }
-
-        // If no token matched, check for invalid characters
-        if (!matched) {
+        if (!matched)
+        {
             char currentChar = remainingCode[0];
-            if (!isspace(currentChar)) {
-                cout << "Lexical Error: Invalid character '" << currentChar << "' at line " << lineNo << endl;
+            if (!isspace(currentChar))
+            {
+                cout << "Lexical Error: Invalid Charcter " << currentChar << " at Line " << lineNo << " at position " << pos << endl;
                 return;
             }
 
-            // Skip whitespace and update line number
-            if (currentChar == '\n') {
+            if (currentChar == '\n')
+            {
                 lineNo++;
+                pos = 0;
             }
+            else
+                pos++;
+
             remainingCode.erase(0, 1);
         }
     }
@@ -180,15 +194,17 @@ int main(int argc, char const *argv[]) {
     file.close();
 
     tokenize(code);
-    cout << "+-----------+----------------+-----------+----------------+" << endl;
-    cout << "| Token     | Value          | Line      | Scope          |" << endl;
-    cout << "+-----------+----------------+-----------+----------------+" << endl;
-    for (const auto &token : tokens) {
+    cout << "+-----------+----------------+-----------+-----------+" << endl;
+    cout << "| Token     | Value          | Line      | Pos       |" << endl;
+    cout << "+-----------+----------------+-----------+-----------+" << endl;
+
+    for (const auto &token : tokens)
+    {
         cout << "| " << left << setw(9) << tokenTypeNames[get<0>(token)] << " | "
-                  << setw(14) << get<1>(token) << " | "
-                  << setw(9) << to_string(get<2>(token)) << " | "
-                  << setw(14) << get<3>(token) << " |" << endl;
+                << setw(14) << get<1>(token) << " | "
+                << setw(9) << to_string(get<2>(token)) << " | "
+                << setw(9) << get<3>(token) << " | " <<  endl;
     }
-    cout << "+-----------+----------------+-----------+----------------+" << endl;
-    return 0;
+
+return 0;
 }

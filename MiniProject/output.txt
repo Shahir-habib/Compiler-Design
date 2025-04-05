@@ -35,15 +35,36 @@ Reduce by expression -> DEC
 Lookahead : SEMI
 		| Action : s66
 Shift  : SEMI
-Lookahead : RBRACE
+Lookahead : INT
 		| Action : r26
 Reduce by return_stmt -> ID expression SEMI 
-Lookahead : RBRACE
+Lookahead : INT
 		| Action : r22
 Reduce by statement -> return_stmt 
-Lookahead : RBRACE
+Lookahead : INT
 		| Action : r18
 Reduce by statement_list -> statement 
+Lookahead : INT
+		| Action : s2
+Shift  : INT
+Lookahead : ID
+		| Action : r8
+Reduce by type_specifier -> INT 
+Lookahead : ID
+		| Action : s53
+Shift  : ID
+Lookahead : SEMI
+		| Action : s75
+Shift  : SEMI
+Lookahead : RBRACE
+		| Action : r7
+Reduce by declaration -> type_specifier ID SEMI 
+Lookahead : RBRACE
+		| Action : r20
+Reduce by statement -> declaration 
+Lookahead : RBRACE
+		| Action : r19
+Reduce by statement_list -> statement_list statement 
 Lookahead : RBRACE
 		| Action : s51
 Shift  : RBRACE
@@ -95,27 +116,6 @@ Shift  : RPAREN
 Lookahead : LBRACE
 		| Action : s25
 Shift  : LBRACE
-Lookahead : INT
-		| Action : s2
-Shift  : INT
-Lookahead : ID
-		| Action : r8
-Reduce by type_specifier -> INT 
-Lookahead : ID
-		| Action : s53
-Shift  : ID
-Lookahead : SEMI
-		| Action : s75
-Shift  : SEMI
-Lookahead : READ
-		| Action : r7
-Reduce by declaration -> type_specifier ID SEMI 
-Lookahead : READ
-		| Action : r20
-Reduce by statement -> declaration 
-Lookahead : READ
-		| Action : r18
-Reduce by statement_list -> statement 
 Lookahead : READ
 		| Action : s31
 Shift  : READ
@@ -132,101 +132,29 @@ Lookahead : ID
 		| Action : r24
 Reduce by statement -> read_stmt 
 Lookahead : ID
-		| Action : r19
-Reduce by statement_list -> statement_list statement 
-Lookahead : ID
-		| Action : s28
-Shift  : ID
-Lookahead : NUM
-		| Action : s46
-Shift  : NUM
-Lookahead : SEMI
-		| Action : r29
-Reduce by expression -> NUM 
-Lookahead : SEMI
-		| Action : s66
-Shift  : SEMI
-Lookahead : RBRACE
-		| Action : r26
-Reduce by return_stmt -> ID expression SEMI 
-Lookahead : RBRACE
-		| Action : r22
-Reduce by statement -> return_stmt 
-Lookahead : RBRACE
-		| Action : r19
-Reduce by statement_list -> statement_list statement 
-Lookahead : RBRACE
-		| Action : s51
-Shift  : RBRACE
-Lookahead : INT
-		| Action : r17
-Reduce by compound_stmt -> LBRACE statement_list RBRACE 
-Lookahead : INT
-		| Action : r13
-Reduce by function -> type_specifier ID LPAREN params RPAREN compound_stmt 
-Lookahead : INT
-		| Action : r11
-Reduce by function_list -> function 
-Lookahead : INT
-		| Action : s2
-Shift  : INT
-Lookahead : ID
-		| Action : r8
-Reduce by type_specifier -> INT 
-Lookahead : ID
-		| Action : s18
-Shift  : ID
-Lookahead : SEMI
-		| Action : s20
-Shift  : SEMI
-Lookahead : INT
-		| Action : r7
-Reduce by declaration -> type_specifier ID SEMI 
-Lookahead : INT
-		| Action : r5
-Reduce by declaration_list -> declaration 
-Lookahead : INT
-		| Action : s2
-Shift  : INT
-Lookahead : ID
-		| Action : r8
-Reduce by type_specifier -> INT 
-Lookahead : ID
-		| Action : s17
-Shift  : ID
-Lookahead : LPAREN
-		| Action : s19
-Shift  : LPAREN
-Lookahead : RPAREN
-		| Action : r14
-Reduce by params -> 
-Lookahead : RPAREN
-		| Action : s23
-Shift  : RPAREN
-Lookahead : LBRACE
-		| Action : s25
-Shift  : LBRACE
-Lookahead : ID
-		| Action : s28
-Shift  : ID
-Lookahead : NUM
-		| Action : s46
-Shift  : NUM
-Lookahead : SEMI
-		| Action : r29
-Reduce by expression -> NUM 
-Lookahead : SEMI
-		| Action : s66
-Shift  : SEMI
-Lookahead : RBRACE
-		| Action : r26
-Reduce by return_stmt -> ID expression SEMI 
-Lookahead : RBRACE
-		| Action : r22
-Reduce by statement -> return_stmt 
-Lookahead : RBRACE
 		| Action : r18
 Reduce by statement_list -> statement 
+Lookahead : ID
+		| Action : s28
+Shift  : ID
+Lookahead : NUM
+		| Action : s46
+Shift  : NUM
+Lookahead : SEMI
+		| Action : r29
+Reduce by expression -> NUM 
+Lookahead : SEMI
+		| Action : s66
+Shift  : SEMI
+Lookahead : RBRACE
+		| Action : r26
+Reduce by return_stmt -> ID expression SEMI 
+Lookahead : RBRACE
+		| Action : r22
+Reduce by statement -> return_stmt 
+Lookahead : RBRACE
+		| Action : r19
+Reduce by statement_list -> statement_list statement 
 Lookahead : RBRACE
 		| Action : s51
 Shift  : RBRACE
@@ -249,11 +177,6 @@ Lookahead : $
 		| Action : r1
 Reduce by S -> function_list S 
 Lookahead : $
-		| Action : r2
-Reduce by S -> declaration_list S 
-Lookahead : $
-		| Action : r1
-Reduce by S -> function_list S 
-Lookahead : $
 		| Accepted 👌👌👌👌
+Symbol Table written to file 'symbol_table.txt'
 

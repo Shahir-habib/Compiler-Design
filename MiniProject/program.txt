@@ -1,13 +1,9 @@
 float fun(){
     return 0.0 ;
+    int x;
 }
 int x ;
 int main() {
-    int x;
     read x ;
-    return 0 ;
-}
-int x;
-int main() {
     return 0 ;
 }

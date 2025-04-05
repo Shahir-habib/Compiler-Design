@@ -1,6 +1,14 @@
 #include <bits/stdc++.h>
+#include "symbolTable.cpp"
 using namespace std;
-
+SymbolTable symbolTable;
+struct Row
+{
+    string type;  // First column
+    string value; // Second column
+    int line;     // Third column
+    int position; // Fourth column
+};
 template <typename K, typename V>
 void removeDuplicates(map<K, V> &inputMap)
 {
@@ -632,84 +640,102 @@ void constructlr1parsingTable(const map<int, vector<Item>> &states,
             }
         }
     }
-    ofstream outFile("parsingtable.txt");
-
+    ofstream outFile("parsingTable.txt");
     if (!outFile)
     {
-        cerr << "Error opening file for writing!" << endl;
+        cout << "Error Opening the file!!!" << endl;
         return;
     }
-    int totalsize = terminals.size() + nonTerminals.size() - 1; // Adjusted for uniform column width
-    outFile << "\n_______LR(1) Parsing Table_______\n";         // Print header row
-    outFile << setw(5) << "State" << " |";
-    outFile << setw(15 * terminals.size()) << "Action" << " |";
-    outFile << setw(15 * nonTerminals.size()) << "Goto" << " |\n"; // Adjusted for consistency
 
-    outFile << string(25 * (totalsize), '-') << endl; // Adjusted separator length
+    // Ensure $ is in terminals
+    if (find(terminals.begin(), terminals.end(), "$") == terminals.end())
+        terminals.push_back("$");
 
-    vector<string> allTerms = terminals;
-    // Ensure "$" is included in terminals
-    if (find(allTerms.begin(), allTerms.end(), "$") == allTerms.end())
-    {
-        allTerms.push_back("$");
-    }
+    // Filter visible symbols
+    vector<string> visibleTerminals;
+    for (const string &t : terminals)
+        if (t != "epsilon")
+            visibleTerminals.push_back(t);
 
-    // Print terminal headers (skip "epsilon" if exists)
-    outFile << "       "; // Adjusted for uniform column width
-    for (const string &term : allTerms)
-    {
-        if (term != "epsilon")
-        {
-            outFile << setw(10) << term << " |"; // Adjusted for uniform column width
-        }
-    }
-
-    // Print non-terminal headers (excluding augmented start symbol)
+    vector<string> visibleNonTerminals;
     for (const string &nt : nonTerminals)
-    {
         if (nt != productions[0].first)
-        {
-            outFile << setw(10) << nt << " |"; // Adjusted for uniform column width
-        }
-    }
+            visibleNonTerminals.push_back(nt);
 
-    outFile << "\n"
-            << string(25 * (totalsize), '-') << endl; // Adjusted separator length to 40
+    // Column widths
+    int colWidthTerminals = 12;
+    int colWidthNonTerminals = 18;
+    int stateWidth = 7;
 
-    // Populate table rows
+    int actionWidth = (colWidthTerminals + 3) * visibleTerminals.size();
+    int gotoWidth = (colWidthNonTerminals + 3) * visibleNonTerminals.size();
+    int totalWidth = gotoWidth + actionWidth - 27;
+
+    // Title
+    string title = "LR(1) Parsing Table";
+    int titlePos = (totalWidth - title.length()) / 2;
+    outFile << string(titlePos, '-') << " " << title << " " << string(totalWidth - titlePos - title.length() - 2, '-') << "\n\n";
+
+    // Top header line
+    outFile << string(stateWidth + 1, '-') << "+";
+    outFile << string(actionWidth - 25, '-') << "+";
+    outFile << string(gotoWidth - 13, '-') << "+\n";
+
+    // First header row: State | ACTION | GOTO
+    outFile << setw(stateWidth) << "State" << " |";
+    outFile << setw(actionWidth / 2 + 30) << "ACTION (terminals)";
+    outFile << setw(gotoWidth / 2) << "|" << setw(gotoWidth / 2) << "GOTO (non-terminals)" << setw(gotoWidth / 2 - 11) << "|\n";
+
+    outFile << string(stateWidth, '-') << "-+";
+    for (size_t i = 0; i < visibleTerminals.size(); ++i)
+        outFile << string(colWidthTerminals, '-') << "-+";
+    for (size_t i = 0; i < visibleNonTerminals.size(); ++i)
+        outFile << string(colWidthNonTerminals, '-') << "-+";
+    outFile << "\n";
+    // Second header row: terminals and non-terminals
+    outFile << setw(stateWidth) << " " << " |";
+    for (const string &term : visibleTerminals)
+        outFile << setw(colWidthTerminals) << term << " |";
+    for (const string &nt : visibleNonTerminals)
+        outFile << setw(colWidthNonTerminals) << nt << " |";
+    outFile << "\n";
+
+    // Separator line
+    outFile << string(stateWidth, '-') << "-+";
+    for (size_t i = 0; i < visibleTerminals.size(); ++i)
+        outFile << string(colWidthTerminals, '-') << "-+";
+    for (size_t i = 0; i < visibleNonTerminals.size(); ++i)
+        outFile << string(colWidthNonTerminals, '-') << "-+";
+    outFile << "\n";
+
+    // Table rows
     for (const auto &[stateId, items] : states)
     {
-        outFile << setw(5) << stateId << " |"; // Adjusted for uniform column width
+        outFile << setw(stateWidth) << stateId << " |";
 
-        // Print actions for terminals (including "$")
-        for (const string &term : allTerms)
+        for (const string &term : visibleTerminals)
         {
-            if (term == "epsilon")
-                continue;
             string action = parsingTable[{stateId, term}];
-            if (!action.empty())
-            {
-                outFile << setw(10) << action << " |"; // Adjusted for uniform column width
-            }
-            else
-            {
-                outFile << setw(10) << " " << " |"; // Adjusted for uniform column width
-            }
+            outFile << setw(colWidthTerminals) << (action.empty() ? " " : action) << " |";
         }
 
-        // Print GOTO actions for non-terminals
-        for (const string &nt : nonTerminals)
+        for (const string &nt : visibleNonTerminals)
         {
-            if (nt != productions[0].first)
-            {
-                string gotoAction = parsingTable[{stateId, nt}];
-                outFile << setw(10) << gotoAction << " |"; // Adjusted for uniform column width
-            }
+            string go = parsingTable[{stateId, nt}];
+            outFile << setw(colWidthNonTerminals) << (go.empty() ? " " : go) << " |";
         }
 
-        outFile << "\n"
-                << string(25 * (totalsize), '-') << endl; // Adjusted separator length to 40
+        outFile << "\n";
+
+        // Row separator
+        outFile << string(stateWidth, '-') << "-+";
+        for (size_t i = 0; i < visibleTerminals.size(); ++i)
+            outFile << string(colWidthTerminals, '-') << "-+";
+        for (size_t i = 0; i < visibleNonTerminals.size(); ++i)
+            outFile << string(colWidthNonTerminals, '-') << "-+";
+        outFile << "\n";
     }
+    outFile.close();
 }
 // Function to print a single item
 
@@ -759,24 +785,93 @@ void printStates(const map<int, vector<Item>> &states, ofstream &outFile)
     }
     outFile.close();
 }
+void handleToken(Row &r,vector<Row>&tokens,int tokenIndex)
+{
+    string type= r.type;
+    string value =r.value;
+    int line = r.line;
+    int pos =r.position;
+    if(value == "return") return;
+    if(type == "LBRACE") symbolTable.enterScope();
+    else if(type == "RBRACE") symbolTable.exitScope();
+    else if (type == "INT" || type == "FLOAT"){
+        if(tokenIndex + 1 < tokens.size() && tokens[tokenIndex+1].type == "ID"){
+            string varName = (tokens[tokenIndex + 1].value);
+                symbolTable.insert(type, varName, "", line, pos);
+        }
+    }
+    else if (type == "ID")
+        {
+            if ( !symbolTable.exists(value))
+            {
+                cerr << "Error: Undeclared variable '" << value << "' at line " << line << endl;
+            }
+            else
+            {
+                symbolTable.markUsed(value, line, pos);
+            }
+        }
+        else if (type == "EQ")
+        {
+            if (tokenIndex - 1 >= 0 && (tokens[tokenIndex - 1].type) == "ID")
+            {
+                string lhsVar = (tokens[tokenIndex - 1].value);
+                string expression = "";
+                bool containsVariable = false;
 
-void parseInput(vector<string> &tkns,
+                int i = tokenIndex + 1;
+                while (i < tokens.size() && (tokens[i].type) != "SEMI")
+                {
+                    string tType = (tokens[i].type);
+                    string tVal = (tokens[i].value);
+
+                    if (tType == "ID")
+                    {
+                        if (!symbolTable.exists(tVal))
+                        {
+                            cerr << "\n\nError: Undeclared variable '" << tVal << "' at line " << line << "\n\n";
+                            return;
+                        }
+                        containsVariable = true;
+                        symbolTable.markUsed(tVal, line,(tokens[i].position)); 
+                    }
+
+                    expression += tVal;
+                    i++;
+                }
+
+                if (containsVariable)
+                {
+                    symbolTable.updateValue(lhsVar, "UNKNOWN", line, pos);
+                }
+                else
+                {
+                    symbolTable.updateValue(lhsVar,expression, line, pos);
+                }
+            }
+        }
+}
+void parseInput(vector<Row> &tokens,
                 const map<pair<int, string>, string> &parsingTable,
                 const map<int, pair<string, vector<string>>> &productions)
 {
+    vector<string> tkns;
+    for (auto x : tokens)
+    {
+        tkns.push_back(x.type);
+    }
     stack<string> stck;
     stck.push("0");
     int tknindex = 0;
     tkns.push_back("$");
     string lookahead = tkns[tknindex];
-
     cout << "Parsing Input........" << endl;
     // Print the header for the table
     // cout << "| Stack\t\t| Input\t\t\t| Action\t|" << endl;
     // cout << "|---------------|----------------------|---------------|" << endl;
     while (true)
     {
-        
+        Row r = tokens[tknindex];
         cout << "Lookahead : " << lookahead << endl;
         // Print the current stack
         stack<string> temp = stck; // Create a copy of the stack for printing
@@ -786,15 +881,6 @@ void parseInput(vector<string> &tkns,
             stack_str = temp.top() + " " + stack_str;
             temp.pop();
         }
-
-        // Print the current input
-        // cout << "| " << stack_str << "\t\t| ";
-        // for (int i = tknindex; i < tkns.size(); i++)
-        // {
-        //     cout << tkns[i] << " ";
-        // }
-
-        // Prepare to print the action
         cout << "\t\t| ";
 
         string topstck = stck.top();
@@ -816,6 +902,7 @@ void parseInput(vector<string> &tkns,
             cout << "Shift  : " << lookahead << endl;
             stck.push(lookahead);
             stck.push(parsingTable.at({topst, lookahead}).substr(1));
+            handleToken(r,tokens,tknindex);
             tknindex++;
             lookahead = tkns[tknindex];
         }
@@ -846,14 +933,36 @@ void parseInput(vector<string> &tkns,
         else if (parsingTable.find({topst, lookahead}) != parsingTable.end() && parsingTable.at({topst, lookahead}) == "Accept")
         {
             cout << "Accepted 👌👌👌👌" << endl;
+            ofstream outFile("symbol_table.txt");
+            if (outFile.is_open())
+            {
+                symbolTable.printTable(outFile);
+                cout << "Symbol Table written to file 'symbol_table.txt'" << endl;
+                outFile.close();
+            }
+            else
+            {
+                cerr << "Error: Unable to open file.\n";
+            }
             break;
         }
         // Completed just epsilon left
         else
         {
-            if (lookahead == "$" )
+            if (lookahead == "$")
             {
                 cout << "Accepted 👌👌👌👌" << endl;
+                ofstream outFile("symbol_table.txt");
+                if (outFile.is_open())
+                {
+                    symbolTable.printTable(outFile);
+                    cout << "Symbol Table written to file 'symbol_table.txt'" << endl;
+                    outFile.close();
+                }
+                else
+                {
+                    cerr << "Error: Unable to open file.\n";
+                }
                 break;
             }
             cout << "Error: Unexpected token '" << lookahead << "' at state " << topst << endl;
@@ -890,27 +999,29 @@ int main(int argc, char const *argv[])
     readterminals_and_nonterminals(nonTerminals, terminals, terminalSet, file);
     map<int, pair<string, vector<string>>> productions;
     map<pair<int, string>, string> parsingTable;
-    vector<string> inputTokens;
+    vector<Row> inputTokens;
     string token;
-    // while (stringFile >> token)
-    // {
-    //     // if (token == "epsilon")
-    //     //     continue;
-    //     inputTokens.push_back(token);
-    // }
-    int c=0;
+    int c = 0;
     while (getline(stringFile, line))
     {
         stringstream ss(line);
-        string tokenType, value;
-        int lineNumber, scopeLevel;
-
-        ss >> tokenType >> value >> lineNumber >> scopeLevel;
+        string cell;
+        Row row;
         if (c > 2)
-            inputTokens.push_back(value);
+        {
+            getline(ss, cell, '|');
+            getline(ss, cell, '|');
+            row.type = trim(cell);
+            getline(ss, cell, '|');
+            row.value = trim(cell);
+            getline(ss, cell, '|');
+            row.line = stoi(cell);
+            getline(ss, cell, '|');
+            row.position = stoi(cell);
+            inputTokens.push_back(row);
+        }
         c++;
     }
-    inputTokens.pop_back();
     ofstream outFile("lr1itemsets.txt");
 
     if (!outFile)
