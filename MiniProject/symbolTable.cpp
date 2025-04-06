@@ -1,8 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-struct Symbol
-{
+struct Symbol {
     string tokenType;
     string name;
     string value;
@@ -14,171 +13,117 @@ struct Symbol
     vector<tuple<int, int, int>> references;
 };
 
-class SymbolTable
-{
-    unordered_map<int, unordered_map<string, Symbol>> table;
-    stack<int> scopeStack;
-    int currScope;
+class SymbolTable {
+    unordered_map<int, unordered_map<string, Symbol>> table; // scope -> (name -> Symbol)
+    unordered_map<int, int> parentScope; // scope -> parent scope
+    unordered_map<string, int> functionBaseScope; // function name -> base scope
+    unordered_map<string, stack<int>> functionScopeStacks; // function name -> scope stack
+    unordered_map<string, int> functionCurrentScope; // function name -> current scope
     uintptr_t currentMemoryAddress;
+    int globalScopeCounter;
+    string currentFunction;
 
 public:
-    SymbolTable()
-    {
+    SymbolTable() {
         currentMemoryAddress = 0x1000;
-        currScope = 0;
-        scopeStack.push(currScope);
+        globalScopeCounter = 0;
+        functionBaseScope["global"] = globalScopeCounter;
+        parentScope[globalScopeCounter] = -1;
+        functionScopeStacks["global"].push(globalScopeCounter);
+        functionCurrentScope["global"] = globalScopeCounter;
+        currentFunction = "global";
     }
 
-    uintptr_t allocateMemory(string tokenType)
-    {
+    uintptr_t allocateMemory(string tokenType) {
         uintptr_t assignedAddress = currentMemoryAddress;
-
         if (tokenType == "INT")
-        {
             currentMemoryAddress += 4;
-        }
         else if (tokenType == "FLOAT")
-        {
             currentMemoryAddress += 8;
-        }
-
         return assignedAddress;
     }
 
-    int getCurrentScope()
-    {
-        return currScope;
+    void startFunction(const string& functionName) {
+        currentFunction = functionName;
+        globalScopeCounter++;
+        int baseScope = globalScopeCounter;
+        functionBaseScope[functionName] = baseScope;
+        parentScope[baseScope] = functionBaseScope["global"];
+        functionScopeStacks[functionName].push(baseScope);
+        functionCurrentScope[functionName] = baseScope;
     }
 
-    void enterScope()
-    {
-        currScope++;
-        scopeStack.push(currScope);
+    void endFunction() {
+        currentFunction = "global";
     }
 
-    void exitScope()
-    {
-        if (!scopeStack.empty())
-        {
-            scopeStack.pop();
-            if (!scopeStack.empty())
-                currScope = scopeStack.top();
-            else
-                currScope = 0;
+    void enterScope() {
+        globalScopeCounter++;
+        int parent = functionCurrentScope[currentFunction];
+        parentScope[globalScopeCounter] = parent;
+        functionScopeStacks[currentFunction].push(globalScopeCounter);
+        functionCurrentScope[currentFunction] = globalScopeCounter;
+    }
+
+    void exitScope() {
+        if (!functionScopeStacks[currentFunction].empty()) {
+            functionScopeStacks[currentFunction].pop();
+            if (!functionScopeStacks[currentFunction].empty())
+                functionCurrentScope[currentFunction] = functionScopeStacks[currentFunction].top();
         }
     }
 
-    int getVariableScope(const string &name)
-    {
-        stack<int> tempStack = scopeStack;
-        while (!tempStack.empty())
-        {
-            int scopeLevel = tempStack.top();
-            tempStack.pop();
-
-            if (table[scopeLevel].find(name) != table[scopeLevel].end())
-            {
-                return scopeLevel;
-            }
+    int findScopeOfVariable(const string& name) {
+        int scope = functionCurrentScope[currentFunction];
+        while (scope >= 0) {
+            if (table[scope].find(name) != table[scope].end())
+                return scope;
+            scope = parentScope.count(scope) ? parentScope[scope] : -1;
         }
         return -1;
     }
 
-    void insert(string tokenType, string name, string value, int line, int pos)
-    {
-        // Check if the variable exists in the current scope
-        if (table[currScope].find(name) != table[currScope].end())
-        {
+    void insert(string tokenType, string name, string value, int line, int pos) {
+        int currScope = functionCurrentScope[currentFunction];
+        if (table[currScope].find(name) != table[currScope].end()) {
             table[currScope][name].value = value;
             return;
         }
 
-        // Check if the value corresponds to an existing variable in any scope
-        if (exists(value))
-        {
-            string existingValue = getValue(value);
-            if (!existingValue.empty())
-            {
-                value = existingValue;
-            }
-        }
+        int valScope = findScopeOfVariable(value);
+        if (valScope != -1) value = table[valScope][value].value;
 
-        // Allocate memory and insert the variable in the current scope
         uintptr_t memAddress = allocateMemory(tokenType);
         table[currScope][name] = {tokenType, name, value, false, line, pos, currScope, memAddress};
     }
 
-    void markUsed(string name, int line, int pos)
-    {
-        stack<int> tempStack = scopeStack;
-        while (!tempStack.empty())
-        {
-            int scopeLevel = tempStack.top();
-            tempStack.pop();
-            if (table[scopeLevel].find(name) != table[scopeLevel].end())
-            {
-                table[scopeLevel][name].isUsed = true;
-                table[scopeLevel][name].references.push_back({line, pos, currScope});
-                return;
-            }
+    void markUsed(string name, int line, int pos) {
+        int varScope = findScopeOfVariable(name);
+        if (varScope != -1) {
+            table[varScope][name].isUsed = true;
+            table[varScope][name].references.emplace_back(line, pos, functionCurrentScope[currentFunction]);
         }
     }
 
-    string getType(const string &varName)
-    {
-        stack<int> tempStack = scopeStack;
-
-        while (!tempStack.empty())
-        {
-            int scopeLevel = tempStack.top();
-            tempStack.pop();
-
-            if (table[scopeLevel].find(varName) != table[scopeLevel].end())
-            {
-                return table[scopeLevel][varName].tokenType;
-            }
-        }
-        return "UNKNOWN";
+    string getType(const string &varName) {
+        int scope = findScopeOfVariable(varName);
+        return (scope != -1) ? table[scope][varName].tokenType : "UNKNOWN";
     }
 
-    bool exists(string name)
-    {
-        stack<int> tempStack = scopeStack;
-        while (!tempStack.empty())
-        {
-            int scopeLevel = tempStack.top();
-            tempStack.pop();
-
-            if (table[scopeLevel].find(name) != table[scopeLevel].end())
-                return true;
-        }
-        return false;
+    bool exists(const string& name) {
+        return findScopeOfVariable(name) != -1;
     }
 
-    string getValue(string name)
-    {
-        stack<int> tempStack = scopeStack;
-        while (!tempStack.empty())
-        {
-            int scopeLevel = tempStack.top();
-            tempStack.pop();
-
-            if (table[scopeLevel].find(name) != table[scopeLevel].end())
-            {
-                return table[scopeLevel][name].value;
-            }
-        }
-        return "";
+    string getValue(const string& name) {
+        int scope = findScopeOfVariable(name);
+        return (scope != -1) ? table[scope][name].value : "";
     }
 
-    void updateValue(string name, string value, int line, int pos)
-    {
-        int varScope = getVariableScope(name);
-        if (varScope != -1)
-        {
-            Symbol &sym = table[varScope][name];
-            if (sym.value.empty())
-            {
+    void updateValue(const string& name, const string& value, int line, int pos) {
+        int scope = findScopeOfVariable(name);
+        if (scope != -1) {
+            Symbol& sym = table[scope][name];
+            if (sym.value.empty()) {
                 sym.value = value;
                 sym.line = line;
                 sym.pos = pos;

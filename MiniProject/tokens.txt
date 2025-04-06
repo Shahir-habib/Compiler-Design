@@ -21,9 +21,10 @@
 | LPAREN    | (              | 6         | 8         | 
 | RPAREN    | )              | 6         | 9         | 
 | LBRACE    | {              | 6         | 11        | 
-| READ      | read           | 7         | 4         | 
-| ID        | x              | 7         | 9         | 
-| SEMI      | ;              | 7         | 11        | 
+| ID        | x              | 7         | 4         | 
+| EQ        | =              | 7         | 5         | 
+| NUM       | 55             | 7         | 6         | 
+| SEMI      | ;              | 7         | 8         | 
 | ID        | return         | 8         | 4         | 
 | NUM       | 0              | 8         | 11        | 
 | SEMI      | ;              | 8         | 13        | 

@@ -4,6 +4,6 @@ float fun(){
 }
 int x ;
 int main() {
-    read x ;
+    x=55;
     return 0 ;
 }

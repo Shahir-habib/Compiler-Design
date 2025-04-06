@@ -112,21 +112,27 @@ Shift  : RPAREN
 Lookahead : LBRACE
 		| Action : s25
 Shift  : LBRACE
-Lookahead : READ
-		| Action : s31
-Shift  : READ
 Lookahead : ID
-		| Action : s50
+		| Action : s28
 Shift  : ID
+Lookahead : EQ
+		| Action : s43
+Shift  : EQ
+Lookahead : NUM
+		| Action : s46
+Shift  : NUM
 Lookahead : SEMI
-		| Action : s74
+		| Action : r29
+Reduce by expression -> NUM 
+Lookahead : SEMI
+		| Action : s76
 Shift  : SEMI
 Lookahead : ID
-		| Action : r42
-Reduce by read_stmt -> READ ID SEMI 
+		| Action : r27
+Reduce by assignments -> ID EQ expression SEMI 
 Lookahead : ID
-		| Action : r24
-Reduce by statement -> read_stmt 
+		| Action : r21
+Reduce by statement -> assignments 
 Lookahead : ID
 		| Action : r18
 Reduce by statement_list -> statement 
