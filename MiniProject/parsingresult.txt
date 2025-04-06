@@ -1,7 +1,3 @@
-First and Follow Sets have been written to 'lr1itemsets.txt'.
-LR(1) Item Sets have been written to 'lr1itemsets.txt'.
-LR(1) Parsing Table has been written to 'parsingtable.txt'.
-Parsing Input........
 Lookahead : FLOAT
 		| Action : s1
 Shift  : FLOAT
@@ -178,5 +174,3 @@ Lookahead : $
 Reduce by S -> function_list S 
 Lookahead : $
 		| Accepted 👌👌👌👌
-Symbol Table written to file 'symbol_table.txt'
-
